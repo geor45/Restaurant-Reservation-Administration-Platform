@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Βυθός | Dashboard Κρατήσεων</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="images.jpg" alt="Βυθός" class="brand-logo" />
+        <div>
+          <h1>ΒΥΘΟΣ</h1>
+          <p>Dashboard</p>
+        </div>
+      </div>
+      <div class="status-pill"><span class="dot"></span> Live από Firebase</div>
+      <div class="sidebar-info">
+        <p>Προβολή κρατήσεων σε πραγματικό χρόνο.</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2>Κρατήσεις</h2>
+          <p>Live ενημέρωση από το Realtime Database.</p>
+        </div>
+        <div class="topbar-actions">
+          <button id="refreshBtn" class="btn btn-ghost" type="button">Refresh</button>
+        </div>
+      </header>
+
+      <section class="stats">
+        <div class="stat"><span class="label">Σύνολο</span><span id="totalCount" class="value">0</span></div>
+        <div class="stat"><span class="label">Νέες</span><span id="newCount" class="value">0</span></div>
+        <div class="stat"><span class="label">Σήμερα</span><span id="todayCount" class="value">0</span></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Λίστα κρατήσεων</h3>
+          <span id="statusText">Συνδέεται...</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Ώρα</th>
+                <th>Άτομα</th>
+                <th>Λεπτομέρειες</th>
+                <th>Κατάσταση</th>
+                <th>Καταχώριση</th>
+              </tr>
+            </thead>
+            <tbody id="reservationsBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="dashboard.js"></script>
+</body>
+</html>
