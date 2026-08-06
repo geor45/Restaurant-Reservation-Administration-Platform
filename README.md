@@ -147,25 +147,25 @@ Live Dashboard
 
 ## 🌐 Desktop Homepage
 
-![Desktop Homepage](screenshots/Desktop Homepage.png)
+![Desktop Homepage](screenshots/DesktopHomepage.png)
 
 ---
 
 ## 📖 Desktop Menu
 
-![Desktop Menu](screenshots/Desktop Menu.png)
+![Desktop Menu](screenshots/DesktopMenu.png)
 
 ---
 
 ## 📱 Mobile Homepage
 
-![Mobile Homepage](screenshots/Mobile Homepage.png)
+![Mobile Homepage](screenshots/MobileHomepage.png)
 
 ---
 
 ## 🔐 Admin Login
 
-![Admin Login](screenshots/Live Reservations.png)
+![Admin Login](screenshots/LiveReservations.png)
 
 ---
 
