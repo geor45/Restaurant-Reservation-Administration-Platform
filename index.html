@@ -425,5 +425,15 @@
   })();
 </script>
 <script type="module" src="./script.js"></script>
+<script>
+  // Περιμένει μισό δευτερόλεπτο (500ms) αφού φορτώσει η σελίδα για να σβήσει το URL
+  setTimeout(() => {
+    if (window.location.search.includes('lang=el')) {
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+    }
+  }, 500);
+</script>
+</script>
 </body>
 </html>

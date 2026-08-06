@@ -461,6 +461,7 @@
           <button class="filter-btn" data-filter="rejected">Rejected</button>
           <button class="filter-btn" data-filter="archived">Archived</button>
           <button id="exportCsvBtn" class="btn-ghost" type="button">Export CSV</button>
+          <button id="enableSoundBtn" class="btn-ghost" type="button">Ενεργοποίηση ήχου</button>
         </div>
 
         <div class="stats-row">
@@ -537,15 +538,15 @@
     } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
     import emailjs from "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm";
 
-    const firebaseConfig = { 
-        apiKey: "AIzaSyDZnoGbQ3LtPJSi9fm8h1hAXRMzqmsYsSg", 
-        authDomain: "vythos.firebaseapp.com", 
-        databaseURL: "https://vythos-default-rtdb.europe-west1.firebasedatabase.app", 
-        projectId: "vythos", 
-        storageBucket: "vythos.firebasestorage.app", 
-        messagingSenderId: "866948522913", 
-        appId: "1:866948522913:web:d601ca585aedfe7486a1e0", 
-         };
+    const firebaseConfig = {
+      apiKey: "AIzaSyDZnoGbQ3LtPJSi9fm8h1hAXRMzqmsYsSg",
+      authDomain: "vythos.firebaseapp.com",
+      databaseURL: "https://vythos-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "vythos",
+      storageBucket: "vythos.firebasestorage.app",
+      messagingSenderId: "866948522913",
+      appId: "1:866948522913:web:d601ca585aedfe7486a1e0",
+    };
 
     const EMAILJS_PUBLIC_KEY = "grBG2EDy7Drg5LiNq";
     const EMAILJS_SERVICE_ID = "service_cjawqmc";
@@ -572,6 +573,7 @@
     const archiveVisibilitySelect = document.getElementById('archiveVisibilitySelect');
     const filterButtons = document.querySelectorAll('.filter-btn');
     const exportCsvBtn = document.getElementById('exportCsvBtn');
+    const enableSoundBtn = document.getElementById('enableSoundBtn');
 
     const statAll = document.getElementById('statAll');
     const statPending = document.getElementById('statPending');
@@ -602,6 +604,11 @@
     let sortMode = 'newest';
     let archiveVisibility = 'hide';
     let currentPage = 1;
+
+    let audioContext = null;
+    let soundEnabled = false;
+    let hasInitializedReservationSnapshot = false;
+    let knownReservationIds = new Set();
 
     function showLoginMessage(message, type = 'error') {
       loginMessage.textContent = message;
@@ -728,7 +735,7 @@
     }
 
     function updatePaginationUI() {
-      const { currentPage, totalPages, total } = getPaginatedReservations();
+      const { currentPage, totalPages } = getPaginatedReservations();
 
       currentPageNum.textContent = currentPage;
       totalPagesNum.textContent = totalPages;
@@ -741,7 +748,7 @@
       updateStats();
       updatePaginationUI();
 
-      const { pageItems, totalPages } = getPaginatedReservations();
+      const { pageItems } = getPaginatedReservations();
 
       if (!pageItems.length) {
         reservationsContainer.innerHTML = `
@@ -762,14 +769,13 @@
           ? `<div class="status-note"><strong>Αρχειοθετήθηκε:</strong><br>${new Date(item.archivedAt).toLocaleString('el-GR')}</div>`
           : '';
 
-        const actionButtons = status === 'archived'
-          ? ''
-          : `
-            <button class="btn-success" data-id="${item.id}" data-action="accepted">Αποδοχή</button>
-            <button class="btn-danger" data-id="${item.id}" data-action="rejected">Απόρριψη</button>
-            <button class="btn-archive" data-id="${item.id}" data-action="archive">Αρχειοθέτηση</button>
-          `;
-
+        const actionButtons = status === 'pending'
+  ? `
+    <button class="btn-success" data-id="${item.id}" data-action="accepted">Αποδοχή</button>
+    <button class="btn-danger" data-id="${item.id}" data-action="rejected">Απόρριψη</button>
+    <button class="btn-archive" data-id="${item.id}" data-action="archive">Αρχειοθέτηση</button>
+  `
+  : '';
         return `
           <article class="card reservation-card ${status}">
             <div class="reservation-head">
@@ -884,12 +890,95 @@
       return snapshot.exists() && snapshot.val() === true;
     }
 
+    function ensureAudioContext() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioContext;
+    }
+
+    async function enableNotificationSound() {
+      try {
+        const ctx = ensureAudioContext();
+        if (ctx.state === 'suspended') {
+          await ctx.resume();
+        }
+
+        soundEnabled = true;
+        enableSoundBtn.textContent = 'Ήχος ενεργός';
+        enableSoundBtn.disabled = true;
+
+        playNotificationSound();
+      } catch (error) {
+        alert('Ο browser μπλόκαρε τον ήχο. Δοκίμασε ξανά.');
+      }
+    }
+
+    function playNotificationSound() {
+      if (!soundEnabled) return;
+
+      const ctx = ensureAudioContext();
+      const now = ctx.currentTime;
+
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.type = 'sine';
+      osc2.type = 'sine';
+
+      osc1.frequency.setValueAtTime(880, now);
+      osc2.frequency.setValueAtTime(1174, now);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.12, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc1.start(now);
+      osc2.start(now + 0.06);
+
+      osc1.stop(now + 0.32);
+      osc2.stop(now + 0.45);
+    }
+
+    async function maybeShowBrowserNotification(newItemsCount) {
+      if (!('Notification' in window)) return;
+
+      if (Notification.permission === 'granted') {
+        new Notification('Νέα κράτηση', {
+          body: `Έφτασαν ${newItemsCount} νέες κρατήσεις για έλεγχο.`,
+          icon: '/favicon.ico'
+        });
+      }
+    }
+
     function attachReservationsListener() {
       if (reservationsListenerAttached) return;
       reservationsListenerAttached = true;
 
       onValue(ref(db, 'reservations'), (snapshot) => {
-        reservationsCache = snapshot.val() || {};
+        const incoming = snapshot.val() || {};
+        const incomingIds = Object.keys(incoming);
+
+        if (!hasInitializedReservationSnapshot) {
+          knownReservationIds = new Set(incomingIds);
+          hasInitializedReservationSnapshot = true;
+        } else {
+          const newIds = incomingIds.filter(id => !knownReservationIds.has(id));
+
+          if (newIds.length > 0) {
+            playNotificationSound();
+            maybeShowBrowserNotification(newIds.length);
+          }
+
+          knownReservationIds = new Set(incomingIds);
+        }
+
+        reservationsCache = incoming;
         renderReservations();
       });
     }
@@ -1023,6 +1112,16 @@
       await signOut(auth);
     });
 
+    enableSoundBtn.addEventListener('click', async () => {
+      await enableNotificationSound();
+
+      if ('Notification' in window && Notification.permission === 'default') {
+        try {
+          await Notification.requestPermission();
+        } catch (error) {}
+      }
+    });
+
     reservationsContainer.addEventListener('click', (event) => {
       const button = event.target.closest('button[data-id][data-action]');
       if (!button) return;
@@ -1115,6 +1214,13 @@
         adminSection.classList.add('hidden');
         logoutBtn.classList.add('hidden');
         reservationsCache = {};
+        hasInitializedReservationSnapshot = false;
+        knownReservationIds = new Set();
+        soundEnabled = false;
+        if (enableSoundBtn) {
+          enableSoundBtn.disabled = false;
+          enableSoundBtn.textContent = 'Ενεργοποίηση ήχου';
+        }
         renderReservations();
       }
     });

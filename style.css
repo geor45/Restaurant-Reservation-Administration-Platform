@@ -2656,3 +2656,72 @@ html {
   font-size: 1rem;
   line-height: 1.55;
 }
+
+@media (max-width: 768px) {
+  .reservation-modal.open {
+    position: fixed;
+    inset: 0;
+    padding: 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .reservation-modal-content {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    margin: 0 auto;
+    padding: 56px 16px 20px;
+    border-radius: 16px;
+  }
+
+  .reservation-modal-content h3 {
+    margin-top: 0;
+  }
+
+  .reservation-modal .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .reservation-modal .form-group,
+  .reservation-modal .form-group.full {
+    width: 100%;
+  }
+
+  .reservation-modal input,
+  .reservation-modal select,
+  .reservation-modal textarea,
+  .reservation-modal button {
+    width: 100%;
+  }
+
+  .reservation-modal textarea {
+    min-height: 110px;
+  }
+
+  .reservation-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    pointer-events: auto;
+  }
+
+  #reservationSubmitBtn {
+    position: static;
+    bottom: auto;
+    z-index: auto;
+  }
+}
